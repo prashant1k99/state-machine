@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Events, ActionStates } from './typedefs';
+import { Events, ActionStates } from './typeDefs';
 
 export default class State {
   private action: () => unknown;
