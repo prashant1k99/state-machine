@@ -92,35 +92,27 @@ export default class StateMachine {
   }
 
   private async executeStateNode(currentState: IStateBody) {
-    let retryCounter = 0;
+    const retryCounter = 0;
     try {
       currentState.stateNode.setEventEmitter(this.stateEventEmitter);
       currentState.stateNode.Context(this.context);
       await currentState.stateNode.execute();
     } catch (err) {
       if (currentState.onError) {
-        if (currentState.onError === 'retry') {
+        if (
+          currentState.onError === 'retry' &&
+          retryCounter < (currentState.retryAttempt || 3)
+        ) {
           setTimeout(
             async () => {
               await currentState.stateNode.execute();
             },
-            typeof currentState.retryDiff === 'number' ? (currentState.retryDiff * 1000) * retryCounter : 1000,
+            typeof currentState.retryDiff === 'number'
+              ? currentState.retryDiff * 1000 * retryCounter
+              : 1000,
           );
         }
-      }
-       currentState.onError.call(this);
-      else if (
-        currentState.retry &&
-        currentState.retry !== 'Never' &&
-        retryCounter < (currentState.retryTimes || 5)
-      ) {
-        if (currentState.retry === 'Instant')
-          await currentState.stateNode.execute();
-        else {
-          
-        }
-        retryCounter++;
-      }
+      } else currentState.onError.call(this.context, this.currentState, this);
     }
   }
 
